@@ -56,6 +56,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <image_transport/image_transport.h>
 
 #include <time.h>
 #include <boost/filesystem.hpp>
@@ -118,7 +119,7 @@ private:
   std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo> > sync_depth_;
 
   ros::Publisher pub_disparity_;
-  ros::Publisher pub_depth_image_;
+  image_transport::Publisher pub_depth_image_;
   ros::Publisher pub_depth_info_;
   ros::Publisher pub_point_cloud_;
 

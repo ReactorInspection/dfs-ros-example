@@ -272,8 +272,9 @@ int32_t Snapdragon::DfsRosNode::Initialize()
   ReadRosParams();
   PrintRosParams();
 
+  image_transport::ImageTransport it(nh_);
   pub_disparity_ = nh_.advertise<stereo_msgs::DisparityImage>("dfs/disparity_image",10);
-  pub_depth_image_ = nh_.advertise<sensor_msgs::Image>("dfs/depth/image_raw",10);
+  pub_depth_image_ = it.advertise("dfs/depth/image_raw",10);
   pub_depth_info_ = nh_.advertise<sensor_msgs::CameraInfo>("dfs/depth/camera_info",10);
   pub_point_cloud_ = nh_.advertise<sensor_msgs::PointCloud2>("dfs/point_cloud",10);
 
