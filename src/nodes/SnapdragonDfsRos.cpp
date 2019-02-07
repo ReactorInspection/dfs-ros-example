@@ -312,8 +312,10 @@ void Snapdragon::DfsRosNode::CameraCallback(const sensor_msgs::ImageConstPtr& im
   dfs_manager_->Process(image_l->data.data(), image_r->data.data());
 
   // update ROS headers
-  header_.stamp = ros::Time::now();
-  header_.seq++;
+  //header_.stamp = ros::Time::now();
+  //header_.seq++;
+  //Use same header as incoming images
+  header_.stamp = image_l->header.stamp;
 
   // create output disparity image
   disp_msg_->image.header = header_;
