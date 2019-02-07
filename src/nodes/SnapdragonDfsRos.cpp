@@ -35,6 +35,11 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <math.h>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 Snapdragon::DfsRosNode::DfsRosNode(ros::NodeHandle nh, ros::NodeHandle pnh) : nh_(nh), pnh_(pnh)
 {
 }
@@ -45,7 +50,7 @@ Snapdragon::DfsRosNode::~DfsRosNode()
 }
 
 void Snapdragon::DfsRosNode::ReadRosParams()
-{  
+{
   pnh_.param<bool>("use_gpu", ros_params_.use_gpu, 0);
   pnh_.param("max_disparity", ros_params_.max_disparity, 32);
   pnh_.param("min_disparity", ros_params_.min_disparity, 0);
@@ -54,7 +59,7 @@ void Snapdragon::DfsRosNode::ReadRosParams()
 }
 
 void Snapdragon::DfsRosNode::PrintRosParams()
-{  
+{
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: Use GPU? = " << ros_params_.use_gpu);
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: max disparity = " << ros_params_.max_disparity);
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: min disparity = " << ros_params_.min_disparity);
@@ -63,42 +68,42 @@ void Snapdragon::DfsRosNode::PrintRosParams()
 }
 
 void Snapdragon::DfsRosNode::PrintMvStereoConfig(mvStereoConfiguration config)
-{  
+{
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, left, width x height: " << config.camera[0].pixelWidth << " x " << config.camera[0].pixelHeight);
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, left, principal point: [ " << config.camera[0].principalPoint[0] << ", " << config.camera[0].principalPoint[1] << " ]");
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, left, focal length: [ " << config.camera[0].focalLength[0] << ", " << config.camera[0].focalLength[1] << " ]");
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, left, distortion model: " << config.camera[0].distortionModel);
-  ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, left, distortion coefficients: [ " << 
-    config.camera[0].distortion[0] << " " << 
-    config.camera[0].distortion[1] << " " << 
-    config.camera[0].distortion[2] << " " << 
-    config.camera[0].distortion[3] << " " << 
-    config.camera[0].distortion[4] << " " << 
-    config.camera[0].distortion[5] << " " << 
-    config.camera[0].distortion[6] << " " << 
+  ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, left, distortion coefficients: [ " <<
+    config.camera[0].distortion[0] << " " <<
+    config.camera[0].distortion[1] << " " <<
+    config.camera[0].distortion[2] << " " <<
+    config.camera[0].distortion[3] << " " <<
+    config.camera[0].distortion[4] << " " <<
+    config.camera[0].distortion[5] << " " <<
+    config.camera[0].distortion[6] << " " <<
     config.camera[0].distortion[7] << "]");
-    
+
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, right, width x height: " << config.camera[1].pixelWidth << " x " << config.camera[1].pixelHeight);
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, right, principal points: [ " << config.camera[1].principalPoint[0] << ", " << config.camera[1].principalPoint[1] << " ]");
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, right, focal length: [ " << config.camera[1].focalLength[0] << ", " << config.camera[1].focalLength[1] << " ]");
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, right, distortion model: " << config.camera[1].distortionModel);
-  ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, right, distortion coefficients: [ " << 
-    config.camera[1].distortion[0] << " " << 
-    config.camera[1].distortion[1] << " " << 
-    config.camera[1].distortion[2] << " " << 
-    config.camera[1].distortion[3] << " " << 
-    config.camera[1].distortion[4] << " " << 
-    config.camera[1].distortion[5] << " " << 
-    config.camera[1].distortion[6] << " " << 
+  ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, right, distortion coefficients: [ " <<
+    config.camera[1].distortion[0] << " " <<
+    config.camera[1].distortion[1] << " " <<
+    config.camera[1].distortion[2] << " " <<
+    config.camera[1].distortion[3] << " " <<
+    config.camera[1].distortion[4] << " " <<
+    config.camera[1].distortion[5] << " " <<
+    config.camera[1].distortion[6] << " " <<
     config.camera[1].distortion[7] << "]");
-  
+
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, extrinsic, translation: [ " << config.translation[0] << ", " << config.translation[1] << ", " << config.translation[2] << " ]");
   ROS_INFO_STREAM("Snapdragon::DfsRosNode: mvStereoConfig, extrinsic, rotation: [ " << config.rotation[0] << ", " << config.rotation[1] << ", " << config.rotation[2] << " ]");
 }
 
 int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& cam_info_l, const sensor_msgs::CameraInfoConstPtr& cam_info_r)
 {
-  
+
   // initialize mv stereo config
   mvStereoConfiguration mv_stereo_config;
   memset( &mv_stereo_config, 0, sizeof( mv_stereo_config ) ); // important!
@@ -119,7 +124,7 @@ int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& c
   }
   mv_stereo_config.camera[0].distortionModel = num_distortion_params_l;
 
- 
+
   // right camera parameters
   mv_stereo_config.camera[1].pixelWidth = cam_info_r->width;
   mv_stereo_config.camera[1].pixelHeight = cam_info_r->height;
@@ -138,7 +143,7 @@ int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& c
 
   mv_stereo_config.camera[0].memoryStride = mv_stereo_config.camera[0].pixelWidth;
   mv_stereo_config.camera[1].memoryStride = mv_stereo_config.camera[1].pixelWidth;
-  
+
   // extrinsic parameters
   tf2::Matrix3x3 R_r(cam_info_r->R[0],cam_info_r->R[1],cam_info_r->R[2],cam_info_r->R[3],cam_info_r->R[4],cam_info_r->R[5],cam_info_r->R[6],cam_info_r->R[7],cam_info_r->R[8]);
   tf2::Matrix3x3 K_prime(cam_info_r->P[0],cam_info_r->P[1],cam_info_r->P[2],cam_info_r->P[4],cam_info_r->P[5],cam_info_r->P[6],cam_info_r->P[8],cam_info_r->P[9],cam_info_r->P[10]);
@@ -148,13 +153,13 @@ int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& c
   for (int32_t i=0; i<3; i++) {
     mv_stereo_config.translation[i] = translation[i];
   }
-  
+
   tf2::Matrix3x3 R_l(cam_info_l->R[0],cam_info_l->R[1],cam_info_l->R[2],cam_info_l->R[3],cam_info_l->R[4],cam_info_l->R[5],cam_info_l->R[6],cam_info_l->R[7],cam_info_l->R[8]);
   tf2::Matrix3x3 rotation_axis_angle = R_r.transpose()*R_l;
-  
+
   // convert to scaled axis angle format for mvlib
   float32_t angle = acos(( rotation_axis_angle[0][0] + rotation_axis_angle[1][1] + rotation_axis_angle[2][2] - 1.0)/2.0);
-  
+
   if (angle==0) // if no rotation (may be the case for simulation)
     for (int32_t i=0; i<3; i++) {
       mv_stereo_config.rotation[i] = 0.0;
@@ -177,7 +182,7 @@ int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& c
   }
 
   PrintMvStereoConfig(mv_stereo_config);
- 
+
   // configure DFS cam module
   Snapdragon::DfsManager::DfsCamConfiguration dfs_cam_config;
   memset( &dfs_cam_config, 0, sizeof( dfs_cam_config ) ); //important!
@@ -188,39 +193,39 @@ int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& c
     dfs_cam_config.dfs_mode  = MVDFS_MODE_ALG0_CPU;
   dfs_cam_config.max_disparity = ros_params_.max_disparity; // ROS param
   dfs_cam_config.min_disparity = ros_params_.min_disparity; // ROS param
-  
+
   height_ = mv_stereo_config.camera[0].pixelHeight;
-  width_ = mv_stereo_config.camera[0].pixelWidth; 
-  
+  width_ = mv_stereo_config.camera[0].pixelWidth;
+
   // initialize dfs_manager
   dfs_manager_ = new Snapdragon::DfsManager();
   if (!dfs_manager_->Init(&dfs_cam_config, height_, width_)) {
     ROS_ERROR_STREAM("Snapdragon::DfsRosNode: Error - DFS manager init not successful! ");
     return -1;
-  } 
-  
+  }
+
   // initialize ROS objects
   header_.stamp = ros::Time::now();
   header_.seq = 0;
   header_.frame_id = ros_params_.frame_id;
-  
+
   depth_info_.height = height_;
   depth_info_.width = width_;
   depth_info_.K = boost::array<double,9> {dfs_manager_->GetDepthCamera().focalLength[0], 0, dfs_manager_->GetDepthCamera().principalPoint[0], 0, dfs_manager_->GetDepthCamera().focalLength[1], dfs_manager_->GetDepthCamera().principalPoint[1], 0, 0, 1};
-  
+
   // set up transform_stereo
   float32_t L[9];
   float32_t R[9];
   mvDFS_GetRectifyingRotations(dfs_manager_->mv_dfs_ptr_, &L[0], &R[0]);
   tf2::Matrix3x3 RR(L[0],L[1],L[2],L[3],L[4],L[5],L[6],L[7],L[8]);
-  
+
   tf2::Quaternion q;
   RR.getRotation(q);
 
   transform_stereo_.transform.translation.x = 0;
   transform_stereo_.transform.translation.y = 0;
   transform_stereo_.transform.translation.z = 0;
-  
+
   tf2::Quaternion rotation = q.inverse();
   rotation.normalize();
 
@@ -237,13 +242,13 @@ int32_t Snapdragon::DfsRosNode::InitDfs(const sensor_msgs::CameraInfoConstPtr& c
   disp_msg_->header = header_;
   disp_msg_->image.header = header_;
   disp_msg_->image.height = height_;
-  disp_msg_->image.width = width_; 
+  disp_msg_->image.width = width_;
   disp_msg_->image.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
   disp_msg_->image.step = disp_msg_->image.width * sizeof(float32_t);
   disp_msg_->image.data.resize(disp_msg_->image.height * disp_msg_->image.step);
   disp_msg_->min_disparity=dfs_manager_->GetDfsCamConfig().min_disparity;
   disp_msg_->max_disparity=dfs_manager_->GetDfsCamConfig().max_disparity;
-  
+
   // Allocate new depth image message
   depth_msg_ = boost::make_shared<sensor_msgs::Image>();
   depth_msg_->header = header_;
@@ -262,15 +267,15 @@ int32_t Snapdragon::DfsRosNode::Initialize()
 {
   // not initialized yet
   initialized_ = false;
-  
+
   // fetch DFS params from ROS parameter server
-  ReadRosParams(); 
+  ReadRosParams();
   PrintRosParams();
-  
+
   pub_disparity_ = nh_.advertise<stereo_msgs::DisparityImage>("dfs/disparity_image",10);
   pub_depth_image_ = nh_.advertise<sensor_msgs::Image>("dfs/depth/image_raw",10);
   pub_depth_info_ = nh_.advertise<sensor_msgs::CameraInfo>("dfs/depth/camera_info",10);
-  pub_point_cloud_ = nh_.advertise<sensor_msgs::PointCloud>("dfs/point_cloud",10);
+  pub_point_cloud_ = nh_.advertise<sensor_msgs::PointCloud2>("dfs/point_cloud",10);
 
   // set up ROS subscribers
   image_sub_l_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "left/image_raw", 1);
@@ -285,7 +290,7 @@ int32_t Snapdragon::DfsRosNode::Initialize()
   sync_->registerCallback(boost::bind(&Snapdragon::DfsRosNode::CameraCallback, this, _1, _2, _3, _4));
   sync_depth_ = new message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo>(*image_sub_d_, *info_sub_d_, 10);
   sync_depth_->registerCallback(boost::bind(&Snapdragon::DfsRosNode::DepthCallback, this, _1, _2));
- 
+
   return 0;
 }
 
@@ -305,7 +310,7 @@ void Snapdragon::DfsRosNode::CameraCallback(const sensor_msgs::ImageConstPtr& im
 
   // call to MV
   dfs_manager_->Process(image_l->data.data(), image_r->data.data());
-  
+
   // update ROS headers
   header_.stamp = ros::Time::now();
   header_.seq++;
@@ -344,7 +349,7 @@ void Snapdragon::DfsRosNode::CameraCallback(const sensor_msgs::ImageConstPtr& im
   // publish depth camera transform
   transform_stereo_.header.stamp = header_.stamp;
   tf_pub_.sendTransform(transform_stereo_);
-  
+
 }
 
 void Snapdragon::DfsRosNode::DepthCallback(const sensor_msgs::ImageConstPtr& image_d,
@@ -354,10 +359,14 @@ void Snapdragon::DfsRosNode::DepthCallback(const sensor_msgs::ImageConstPtr& ima
   float fy = cam_info_d->K[2];
   float cx = cam_info_d->K[4];
   float cy = cam_info_d->K[5];
-  
-  sensor_msgs::PointCloud point_cloud_msg;
-  geometry_msgs::Point32 dfs_point;
-  point_cloud_msg.header = header_;
+
+  //sensor_msgs::PointCloud point_cloud_msg;
+  //geometry_msgs::Point32 dfs_point;
+  //point_cloud_msg.header = header_;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr depth_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointXYZ dfs_point;
+  depth_cloud->points.reserve(height_*width_);
 
   float* depth_array = (float*) (&(image_d->data[0]));
   for(int32_t i = ros_params_.crop; i < height_-ros_params_.crop; i++)
@@ -366,10 +375,18 @@ void Snapdragon::DfsRosNode::DepthCallback(const sensor_msgs::ImageConstPtr& ima
       dfs_point.x = d*(j - cx) / fx;
       dfs_point.y = d*(i - cy) / fy;
       dfs_point.z = d;
-      point_cloud_msg.points.push_back(dfs_point);
+      depth_cloud->points.emplace_back(dfs_point);
     }
 
-  pub_point_cloud_.publish(point_cloud_msg);
+  /* prepare pointCloud msg to publish */
+  pcl::PCLPointCloud2::Ptr pointCloud(new pcl::PCLPointCloud2);
+  pcl::toPCLPointCloud2(*depth_cloud, *pointCloud);
+
+  sensor_msgs::PointCloud2::Ptr pointCloud_out(new sensor_msgs::PointCloud2);
+  pcl_conversions::moveFromPCL(*pointCloud, *pointCloud_out);
+  pointCloud_out->header = header_;
+
+  pub_point_cloud_.publish(pointCloud_out);
 
 }
 

@@ -40,6 +40,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   nodelet
   sensor_msgs
+  pcl_ros
+  pcl_conversions
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -v -pthread -fPIC")
@@ -58,7 +60,7 @@ link_directories(
 )
 
 catkin_package(
-  CATKIN_DEPENDS roscpp nodelet sensor_msgs
+  CATKIN_DEPENDS roscpp nodelet sensor_msgs pcl_ros pcl_conversions
   LIBRARIES snap_dfs_nodelet
 )
 
