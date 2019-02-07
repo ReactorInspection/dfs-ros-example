@@ -75,13 +75,13 @@ public:
   ~DfsRosNode();
 
   void ReadRosParams();
-       
+
   void PrintRosParams();
-  
+
   void PrintMvStereoConfig(mvStereoConfiguration config);
-  
+
   int32_t Initialize();
-  
+
   int32_t InitDfs(const sensor_msgs::CameraInfoConstPtr& cam_info_l,
                   const sensor_msgs::CameraInfoConstPtr& cam_info_r);
 
@@ -89,7 +89,7 @@ public:
                     const sensor_msgs::CameraInfoConstPtr& cam_info_l,
                     const sensor_msgs::ImageConstPtr& image_r,
                     const sensor_msgs::CameraInfoConstPtr& cam_info_r);
-  
+
   void DepthCallback(const sensor_msgs::ImageConstPtr& image_d,
                     const sensor_msgs::CameraInfoConstPtr& cam_info_d);
 
@@ -101,27 +101,27 @@ private:
 
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
-  std_msgs::Header header_; 
+  std_msgs::Header header_;
   stereo_msgs::DisparityImagePtr disp_msg_;
   sensor_msgs::ImagePtr depth_msg_;
   sensor_msgs::CameraInfo depth_info_;
   geometry_msgs::TransformStamped transform_stereo_;
   tf2_ros::TransformBroadcaster tf_pub_;
- 
-  message_filters::Subscriber<sensor_msgs::Image>* image_sub_l_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo>* info_sub_l_;
-  message_filters::Subscriber<sensor_msgs::Image>* image_sub_r_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo>* info_sub_r_;
-  message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo>* sync_;
-  message_filters::Subscriber<sensor_msgs::Image>* image_sub_d_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo>* info_sub_d_;
-  message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo>* sync_depth_;
+
+  std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image> > image_sub_l_;
+  std::shared_ptr<message_filters::Subscriber<sensor_msgs::CameraInfo> > info_sub_l_;
+  std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image> > image_sub_r_;
+  std::shared_ptr<message_filters::Subscriber<sensor_msgs::CameraInfo> > info_sub_r_;
+  std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> > sync_;
+  std::shared_ptr<message_filters::Subscriber<sensor_msgs::Image> > image_sub_d_;
+  std::shared_ptr<message_filters::Subscriber<sensor_msgs::CameraInfo> > info_sub_d_;
+  std::unique_ptr<message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo> > sync_depth_;
 
   ros::Publisher pub_disparity_;
   ros::Publisher pub_depth_image_;
   ros::Publisher pub_depth_info_;
   ros::Publisher pub_point_cloud_;
-  
+
   int32_t height_, width_;
   Snapdragon::DfsManager* dfs_manager_;
   Snapdragon::DfsRosParams ros_params_;

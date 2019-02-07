@@ -278,17 +278,17 @@ int32_t Snapdragon::DfsRosNode::Initialize()
   pub_point_cloud_ = nh_.advertise<sensor_msgs::PointCloud2>("dfs/point_cloud",10);
 
   // set up ROS subscribers
-  image_sub_l_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "left/image_raw", 1);
-  info_sub_l_ = new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh_, "left/camera_info", 1);
-  image_sub_r_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "right/image_raw", 1);
-  info_sub_r_ = new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh_, "right/camera_info", 1);
-  image_sub_d_ = new message_filters::Subscriber<sensor_msgs::Image>(nh_, "dfs/depth/image_raw", 1);
-  info_sub_d_ = new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh_, "dfs/depth/camera_info", 1);
+  image_sub_l_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "left/image_raw", 1));
+  info_sub_l_.reset(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh_, "left/camera_info", 1));
+  image_sub_r_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "right/image_raw", 1));
+  info_sub_r_.reset(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh_, "right/camera_info", 1));
+  image_sub_d_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "dfs/depth/image_raw", 1));
+  info_sub_d_.reset(new message_filters::Subscriber<sensor_msgs::CameraInfo>(nh_, "dfs/depth/camera_info", 1));
 
   // register image callbacks
-  sync_ = new message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo>(*image_sub_l_, *info_sub_l_, *image_sub_r_, *info_sub_r_, 10);
+  sync_.reset(new message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo>(*image_sub_l_, *info_sub_l_, *image_sub_r_, *info_sub_r_, 10));
   sync_->registerCallback(boost::bind(&Snapdragon::DfsRosNode::CameraCallback, this, _1, _2, _3, _4));
-  sync_depth_ = new message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo>(*image_sub_d_, *info_sub_d_, 10);
+  sync_depth_.reset(new message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo>(*image_sub_d_, *info_sub_d_, 10));
   sync_depth_->registerCallback(boost::bind(&Snapdragon::DfsRosNode::DepthCallback, this, _1, _2));
 
   return 0;
